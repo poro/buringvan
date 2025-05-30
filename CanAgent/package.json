@@ -1,0 +1,38 @@
+{
+  "name": "notion-agent-system",
+  "version": "1.0.0",
+  "description": "An automated agent system that interacts with Notion to perform various tasks based on todo items",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "jest"
+  },
+  "keywords": [
+    "notion",
+    "automation",
+    "agent",
+    "conference",
+    "research",
+    "project",
+    "stakeholder"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@notionhq/client": "^2.2.5",
+    "axios": "^1.4.0",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.0.3",
+    "node-cron": "^3.0.2",
+    "rss-parser": "^3.13.0",
+    "xmldom": "^0.6.0"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0",
+    "nodemon": "^2.0.22"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
