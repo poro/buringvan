@@ -1,0 +1,61 @@
+name: miranda_flutter
+description: A cross-platform Flutter application for AI-powered gameplay analysis.
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.3 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Flutter Riverpod for state management
+  flutter_riverpod: ^2.4.9
+  
+  # Supabase integration
+  supabase_flutter: ^2.0.0
+  
+  # Window management (desktop only)
+  window_manager: ^0.3.7
+  
+  # Environment variables
+  flutter_dotenv: ^5.1.0
+  
+  # Path utilities
+  path_provider: ^2.1.1
+  
+  # HTTP requests
+  http: ^1.1.2
+  
+  # JSON serialization
+  json_annotation: ^4.8.1
+  
+  # Bridge to Rust
+  flutter_rust_bridge: ^2.10.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  
+  # JSON code generation
+  json_serializable: ^6.7.1
+  build_runner: ^2.4.7
+  
+  # Linting
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - .env
+
+# Desktop platform configuration
+flutter_desktop:
+  main_window:
+    min_width: 800
+    min_height: 600
+    width: 1200
+    height: 800
