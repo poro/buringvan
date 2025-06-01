@@ -1,0 +1,154 @@
+version: '3.8'
+
+services:
+  # Auth Service
+  auth-service:
+    build:
+      context: ./server/auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=staging
+    env_file:
+      - .env.staging
+    depends_on:
+      - mongodb
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Content Service
+  content-service:
+    build:
+      context: ./server/content-service
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=staging
+    env_file:
+      - .env.staging
+    depends_on:
+      - mongodb
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # AI Service
+  ai-service:
+    build:
+      context: ./server/ai-service
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=staging
+    env_file:
+      - .env.staging
+    depends_on:
+      - mongodb
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Social Service
+  social-service:
+    build:
+      context: ./server/social-service
+      dockerfile: Dockerfile
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=staging
+    env_file:
+      - .env.staging
+    depends_on:
+      - mongodb
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Web Frontend
+  web-frontend:
+    build:
+      context: ./client/web
+      dockerfile: Dockerfile
+      args:
+        - REACT_APP_ENV=staging
+        - REACT_APP_API_URL=https://api-staging.yourdomain.com
+        - REACT_APP_AUTH_URL=https://auth-staging.yourdomain.com
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=staging
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # MongoDB (for staging - in production use managed service)
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: staginguser
+      MONGO_INITDB_ROOT_PASSWORD: stagingpassword
+      MONGO_INITDB_DATABASE: moi_staging
+    volumes:
+      - mongodb_staging_data:/data/db
+    restart: unless-stopped
+
+  # Redis (for staging - in production use managed service)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_staging_data:/data
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy (disabled for local staging)
+  # nginx:
+  #   image: nginx:alpine
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx/staging.conf:/etc/nginx/nginx.conf:ro
+  #     - ./nginx/ssl:/etc/nginx/ssl:ro
+  #   depends_on:
+  #     - web-frontend
+  #     - auth-service
+  #     - content-service
+  #     - ai-service
+  #     - social-service
+  #   restart: unless-stopped
+
+volumes:
+  mongodb_staging_data:
+  redis_staging_data:
+
+networks:
+  default:
+    name: moi_staging_network

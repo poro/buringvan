@@ -1,0 +1,152 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: social-media-ai-production
+
+namespace: social-media-ai-prod
+
+resources:
+  - ../../base
+
+namePrefix: prod-
+
+commonLabels:
+  environment: production
+
+patches:
+  # Increase replicas for production
+  - target:
+      kind: Deployment
+      name: api-gateway
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+  - target:
+      kind: Deployment
+      name: auth-service
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+  - target:
+      kind: Deployment
+      name: content-service
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+  - target:
+      kind: Deployment
+      name: ai-service
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 2
+  - target:
+      kind: Deployment
+      name: social-service
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+  - target:
+      kind: Deployment
+      name: analytics-service
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 2
+  - target:
+      kind: Deployment
+      name: notification-service
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+  - target:
+      kind: Deployment
+      name: web-app
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+
+  # Increase resource limits for production
+  - target:
+      kind: Deployment
+      name: api-gateway
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "512Mi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "500m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/memory
+        value: "1Gi"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/limits/cpu
+        value: "1000m"
+
+  # Add production-specific annotations
+  - target:
+      kind: Deployment
+      labelSelector: "app.kubernetes.io/name=social-media-ai"
+    patch: |-
+      - op: add
+        path: /spec/template/metadata/annotations
+        value:
+          prometheus.io/scrape: "true"
+          prometheus.io/port: "3000"
+          prometheus.io/path: "/metrics"
+
+  # Add HPA (Horizontal Pod Autoscaler) patches
+  - target:
+      kind: Deployment
+      name: api-gateway
+    patch: |-
+      - op: add
+        path: /metadata/annotations
+        value:
+          hpa.autoscaling.kubernetes.io/minReplicas: "3"
+          hpa.autoscaling.kubernetes.io/maxReplicas: "10"
+          hpa.autoscaling.kubernetes.io/targetCPUUtilizationPercentage: "70"
+
+images:
+  - name: social-media-ai/api-gateway
+    newTag: v1.0.0
+  - name: social-media-ai/auth-service
+    newTag: v1.0.0
+  - name: social-media-ai/content-service
+    newTag: v1.0.0
+  - name: social-media-ai/ai-service
+    newTag: v1.0.0
+  - name: social-media-ai/social-service
+    newTag: v1.0.0
+  - name: social-media-ai/analytics-service
+    newTag: v1.0.0
+  - name: social-media-ai/notification-service
+    newTag: v1.0.0
+  - name: social-media-ai/web-app
+    newTag: v1.0.0
+
+configMapGenerator:
+  - name: app-config
+    literals:
+      - NODE_ENV=production
+      - LOG_LEVEL=info
+      - DEBUG=false
+
+# Note: In production, use external secret management tools
+# This is just for demonstration purposes
+secretGenerator:
+  - name: prod-secrets
+    literals:
+      - mongodb-username=prodadmin
+      - mongodb-password=prod-secure-password-from-vault
+      - redis-password=prod-redis-password-from-vault
+      - jwt-secret=prod-jwt-secret-from-vault
+      - jwt-refresh-secret=prod-jwt-refresh-secret-from-vault

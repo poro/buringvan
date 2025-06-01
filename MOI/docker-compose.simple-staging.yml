@@ -1,0 +1,44 @@
+services:
+  # MongoDB for staging
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: staginguser
+      MONGO_INITDB_ROOT_PASSWORD: stagingpassword
+      MONGO_INITDB_DATABASE: moi_staging
+    volumes:
+      - mongodb_staging_data:/data/db
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.runCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Redis for staging
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_staging_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  mongodb_staging_data:
+  redis_staging_data:
+
+networks:
+  default:
+    name: moi_staging_network

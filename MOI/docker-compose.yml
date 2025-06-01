@@ -1,0 +1,210 @@
+version: '3.8'
+
+services:
+  # Database Services
+  mongodb:
+    image: mongo:7
+    container_name: moi_mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: social_media_ai
+    volumes:
+      - mongodb_data:/data/db
+      - ./database/init/init.js:/docker-entrypoint-initdb.d/01-init.js:ro
+      - ./database/init/seed.js:/docker-entrypoint-initdb.d/02-seed.js:ro
+    ports:
+      - "27017:27017"
+    networks:
+      - moi_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: moi_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass redis123
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - moi_network
+
+  # Backend Services
+  api-gateway:
+    build:
+      context: ./server/api-gateway
+      dockerfile: Dockerfile
+    container_name: moi_api_gateway
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - REDIS_URL=redis://:redis123@redis:6379
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - CONTENT_SERVICE_URL=http://content-service:3002
+      - AI_SERVICE_URL=http://ai-service:3003
+      - SOCIAL_SERVICE_URL=http://social-service:3004
+      - ANALYTICS_SERVICE_URL=http://analytics-service:3005
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3006
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+      - auth-service
+      - content-service
+      - ai-service
+      - social-service
+      - analytics-service
+      - notification-service
+    networks:
+      - moi_network
+
+  auth-service:
+    build:
+      context: ./server/auth-service
+      dockerfile: Dockerfile
+    container_name: moi_auth_service
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/social_media_ai?authSource=admin
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-in-production
+      - BCRYPT_ROUNDS=12
+      - REDIS_URL=redis://:redis123@redis:6379
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - moi_network
+
+  content-service:
+    build:
+      context: ./server/content-service
+      dockerfile: Dockerfile
+    container_name: moi_content_service
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/social_media_ai?authSource=admin
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - REDIS_URL=redis://:redis123@redis:6379
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - moi_network
+
+  ai-service:
+    build:
+      context: ./server/ai-service
+      dockerfile: Dockerfile
+    container_name: moi_ai_service
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3003
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/social_media_ai?authSource=admin
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - OPENAI_API_KEY=your-openai-api-key-here
+      - OPENAI_MODEL=gpt-4
+      - REDIS_URL=redis://:redis123@redis:6379
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - moi_network
+
+  social-service:
+    build:
+      context: ./server/social-service
+      dockerfile: Dockerfile
+    container_name: moi_social_service
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3004
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/social_media_ai?authSource=admin
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - REDIS_URL=redis://:redis123@redis:6379
+      - LINKEDIN_CLIENT_ID=your-linkedin-client-id
+      - LINKEDIN_CLIENT_SECRET=your-linkedin-client-secret
+      - TWITTER_CLIENT_ID=your-twitter-client-id
+      - TWITTER_CLIENT_SECRET=your-twitter-client-secret
+      - INSTAGRAM_CLIENT_ID=your-instagram-client-id
+      - INSTAGRAM_CLIENT_SECRET=your-instagram-client-secret
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - moi_network
+
+  analytics-service:
+    build:
+      context: ./server/analytics-service
+      dockerfile: Dockerfile
+    container_name: moi_analytics_service
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3005
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/social_media_ai?authSource=admin
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - REDIS_URL=redis://:redis123@redis:6379
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - moi_network
+
+  notification-service:
+    build:
+      context: ./server/notification-service
+      dockerfile: Dockerfile
+    container_name: moi_notification_service
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - PORT=3006
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/social_media_ai?authSource=admin
+      - JWT_SECRET=your-super-secret-jwt-key-change-in-production
+      - REDIS_URL=redis://:redis123@redis:6379
+      - SENDGRID_API_KEY=your-sendgrid-api-key
+      - TWILIO_ACCOUNT_SID=your-twilio-account-sid
+      - TWILIO_AUTH_TOKEN=your-twilio-auth-token
+      - FIREBASE_SERVER_KEY=your-firebase-server-key
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - moi_network
+
+  # Frontend
+  web-app:
+    build:
+      context: ./client/web
+      dockerfile: Dockerfile
+    container_name: moi_web_app
+    restart: unless-stopped
+    environment:
+      - REACT_APP_API_URL=http://localhost:3000
+      - REACT_APP_WS_URL=ws://localhost:3000
+    ports:
+      - "3001:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - moi_network
+
+volumes:
+  mongodb_data:
+  redis_data:
+
+networks:
+  moi_network:
+    driver: bridge

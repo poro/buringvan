@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: social-media-ai-base
+
+resources:
+  - infrastructure.yaml
+  - services.yaml
+  - secrets.yaml
+
+commonLabels:
+  app.kubernetes.io/name: social-media-ai
+  app.kubernetes.io/version: "1.0.0"
+  app.kubernetes.io/managed-by: kustomize
+
+images:
+  - name: social-media-ai/api-gateway
+    newTag: latest
+  - name: social-media-ai/auth-service
+    newTag: latest
+  - name: social-media-ai/content-service
+    newTag: latest
+  - name: social-media-ai/ai-service
+    newTag: latest
+  - name: social-media-ai/social-service
+    newTag: latest
+  - name: social-media-ai/analytics-service
+    newTag: latest
+  - name: social-media-ai/notification-service
+    newTag: latest
+  - name: social-media-ai/web-app
+    newTag: latest
