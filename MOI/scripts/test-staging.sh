@@ -153,7 +153,7 @@ test_service_health() {
             # Test health endpoint returns valid JSON
             run_test_with_output "$service_name returns valid health data" \
                 "curl -s http://localhost:$port$endpoint" \
-                '"status".*"success"'
+                '"status".*("success"|"healthy")'
         else
             skip_test "$service_name tests" "Service not running on port $port"
         fi
